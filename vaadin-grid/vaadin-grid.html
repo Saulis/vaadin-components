@@ -1,0 +1,180 @@
+<link rel='import' href='vaadin-grid-import.html'>
+<link rel='import' href='../../../polymer/polymer.html'>
+<link rel="stylesheet" href="vaadin-grid.css" shim-shadowdom>
+
+<dom-module id="v-grid">
+  <template>
+  </template>
+</dom-module>
+
+
+<script>
+  var prototype = {
+    is: "v-grid",
+
+    grid: undefined,
+
+    published: {
+      selectionMode: {
+        reflect: true,
+        type: String
+      },
+
+      disabled: {
+        reflect: true,
+        type: Boolean
+      },
+
+      editable: {
+        reflect: true,
+        type: Boolean
+      },
+
+      frozenColumn: {
+        reflect: true,
+        type: String
+      },
+
+      theme: {
+        reflect: true,
+        type: String
+      }
+    },
+
+    bind: {
+      selectionMode: 'grid.setSelectionMode',
+      dataSource: 'grid.setDataSource',
+      disabled: 'grid.setDisabled',
+      editable: 'grid.setEditable',
+      frozenColumn: 'grid.setFrozenColumn',
+      rows: 'grid.setRowCount',
+      rowCount: 'grid.setRowCount'
+    },
+
+    attributeChanged: function(name, type, value) {
+      switch (name) {
+        case 'selected-rows':
+          this.selectedRows = value.split(',').map(function(x) {
+            return parseInt(x, 10);
+          }).filter(function(x) {
+            return !isNaN(x);
+          });
+          break;
+        case 'selection-mode':
+          this.selectionMode = value;
+          break;
+        case 'disabled':
+          this.disabled = typeof value == "string";
+          break;
+        case 'editable':
+          this.editable = typeof value == "string";
+          break;
+        case 'frozen-column':
+          this.frozenColumn = value;
+          break;
+        case 'theme':
+          this.theme = value;
+          break;
+      }
+    },
+
+    listeners: {
+      'select': 'onSelect'
+    },
+
+    onSelect: function() {
+      this.setAttribute('selected-rows', this.selectedRows.join());
+    },
+
+    selectionModeChanged: function(mode) {
+      this.grid.setSelectionMode(mode);
+    },
+
+    created: function() {
+      this.grid = new vaadin.GridComponent();
+    },
+
+    ready: function() {
+      this.grid.init(this, this.lightDom.querySelector("table"), this.localDom);
+
+      Object.defineProperty(this, 'scrollTop', {
+        get: function() {
+          return this.grid.getScrollTop();
+        },
+        set: function(newValue) {
+          this.grid.setScrollTop(newValue);
+        },
+        enumerable: true,
+        configurable: false
+      });
+    },
+
+    scrollToRow: function(index, scrollDestination) {
+      this.grid.scrollToRow(index, scrollDestination);
+    },
+
+    scrollToStart: function() {
+      this.grid.scrollToStart();
+    },
+
+    scrollToEnd: function() {
+      this.grid.scrollToEnd();
+    },
+
+    select: function(value) {
+      var array = this.selectedRows;
+      if (array.indexOf(value) == -1) {
+        array.push(value);
+        this.selectedRows = array;
+      }
+    },
+
+    deselect: function(value) {
+      var array = this.selectedRows;
+      var index = array.indexOf(value);
+      if (index > -1) {
+        array.splice(index, 1);
+        this.selectedRows = array;
+      }
+    },
+
+    set selectedRows(r) {
+      return this.grid.setSelectedRows(r);
+    },
+    get selectedRows() {
+      return this.grid.getSelectedRows();
+    },
+    set columns(r) {
+      this.grid.setColumns(r);
+    },
+    get columns() {
+      return this.grid.getColumns();
+    },
+    get datasource() {
+      return this.grid.getDataSource();
+    },
+    get sortOrder() {
+      return this.grid.getSortOrder();
+    },
+    set sortOrder(sortOrder) {
+      this.grid.setSortOrder(sortOrder);
+    }
+  };
+
+  function loadComponent() {
+    VGrid = Polymer(prototype);
+    // Give some time to gwt async processes to run (we need this in FF)
+    setTimeout(function() {
+      vaadin._v_grid_ready = true;
+      document.dispatchEvent(new Event('v-grid-ready'));
+    }, 5);
+  }
+
+  if (window.vaadin && window.vaadin.GridComponent) {
+    loadComponent();
+  } else {
+    document.addEventListener("v-grid-loaded", function() {
+      loadComponent();
+    });
+  }
+</script>
